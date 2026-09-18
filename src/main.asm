@@ -1,27 +1,21 @@
-mov bl, 0d97
-mov bh, 0d65
+[org 0x7c00]
 
 mov ah, 0x0e
+mov bx, variableName
 
-loop:
-  mov al, bh
+printString:
+  mov al, [bx]
+  cmp al, 0
+  je end
   int 0x10
-  inc bh
-  inc bh
+  inc bx
+  jmp printString
 
-  inc bl
-  mov al, bl
-  int 0x10
-  inc bl
+variableName:
+  db "But the fool on the hill", 0
 
-  cmp bl, 'z'
-  jg exit
-
-  jmp loop
-
-
-exit:
+end:
   jmp $
 
 times 510-($-$$) db 0
-db 0x55, 0xaa
+dw 0xaa55
