@@ -1,22 +1,27 @@
-org 0x7C00
-; Assembler is directed to assume 0x7C00 as the 
-; virtual 0'th memory address. Becuase,
-; BIOS puts our OS in memory starting
-; from this address.
+mov bl, 0d97
+mov bh, 0d65
 
-bits 16
-; assembler is directed to produce 16 bit code
-; for backward compatibility (8086).
-; A 64-bit processor can run 16-bit codes
+mov ah, 0x0e
+
+loop:
+  mov al, bh
+  int 0x10
+  inc bh
+  inc bh
+
+  inc bl
+  mov al, bl
+  int 0x10
+  inc bl
+
+  cmp bl, 'z'
+  jg exit
+
+  jmp loop
 
 
-main:
-  hlt
+exit:
+  jmp $
 
-.done:
-  jmp .done
-
-
-times 510 - ($-$$) db 0x0
-db 0xAA
-db 0x55
+times 510-($-$$) db 0
+db 0x55, 0xaa
