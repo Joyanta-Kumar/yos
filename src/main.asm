@@ -15,30 +15,79 @@ bits 16
 
 ; --- My Own OS ---
 
-mov si, username
-call print_string
+start:
+  mov di, username
+  call read_string
 
-jmp $
+  mov ah, 0x0e
+  mov al, LF
+  int 0x10
+  mov al, CR
+  int 0x10
+
+  mov si, greeting
+  call print_string
+
+  mov si, username
+  call print_string
+
+  mov al, '.'
+  int 0x10
+
+
+
+end:
+  cli
+  hlt
+  jmp end
+
 
 print_string:
   mov al, [si]
-
   or al, al
   jz .done
-
+  
+  ; if not null print the character
   mov ah, 0x0e
   int 0x10
   inc si
-  
   jmp print_string
+  .done:
+    ret
+
+read_string:
+  mov cx, 0
+  .read_loop:
+    mov ah, 0x00
+    int 0x16
+
+    cmp al, CR
+    je .done
+    cmp cx, username_length
+    je .done
+
+    mov [di], al
+
+    mov ah, 0x0e
+    int 0x10
+
+    inc cx
+    inc di
+
+    jmp .read_loop
 
   .done:
     ret
 
 
-username: db "Joyanta Kumar", 0
-; username_length equ 16
-; username: times username_length db 0
+
+
+LF equ 0x0a
+CR equ 0x0d
+prompt: db LF, CR, "Hi. What is your name?", LF, CR, "> ", 0
+greeting: db "Welcome to your computer, ", 0
+username_length equ 16
+username: times username_length db 0
 
 
 times 510 - ($ - $$) db 0
