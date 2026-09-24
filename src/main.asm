@@ -15,36 +15,30 @@ bits 16
 
 ; --- My Own OS ---
 
-LF equ 0x0a
-CR equ 0x0d
+mov si, username
+call print_string
 
-start:
-  ; Waiting for keystroke
-  mov ah, 0x00
-  int 0x16
+jmp $
 
-  cmp al, CR
-  je move_to_next_line
+print_string:
+  mov al, [si]
 
-  ; Echoing the pressed letter
+  or al, al
+  jz .done
+
   mov ah, 0x0e
   int 0x10
+  inc si
+  
+  jmp print_string
 
-  jmp start
-
-  move_to_next_line:
-    mov ah, 0x0e
-    mov al, LF
-    int 0x10
-    mov al, CR
-    int 0x10
-    jmp start
+  .done:
+    ret
 
 
-stop:
-  cli
-  hlt
-  jmp stop
+username: db "Joyanta Kumar", 0
+; username_length equ 16
+; username: times username_length db 0
 
 
 times 510 - ($ - $$) db 0
