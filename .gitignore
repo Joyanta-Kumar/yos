@@ -1,1 +1,8 @@
 *.bin
+*.elf
+*.o
+*.iso
+
+*.swp
+*~
+.DS_Store
