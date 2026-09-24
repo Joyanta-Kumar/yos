@@ -1,55 +1,46 @@
 [org 0x7c00]
 
-  mov si, prompt        
-  call print_string
 
-  mov di, name_buffer     ; Point DI to our input buffer
-  call read_string        ; Read characters from keyboard
+start:
+  mov ax, 1023d
+  call print_dec
 
-  mov si, newline         ; Print newline
-  call print_string
+  .hang:
+    cli
+    hlt
+    jmp .hang
 
-  mov si, greeting        ; Print "Hello "
-  call print_string
+; input: ax = 16-bit unsigned number to print
+print_dec:
+  push ax
+  push bx
+  push cx
+  push dx
 
-  mov si, name_buffer     ; Print user's name
-  call print_string
+  mov bx, 10  ; Base 10 divisor
+  xor cx, cx  ; cx is 0, will count the number of digits
 
-  jmp $
+  .divide_loop:
+    xor dx, dx  ; Clear dx before dividing dx:ax
+    div bx      ; ax = quotient, dx = remainder
+    add dl, '0' ; convert remainder to ascii char ('0' + 0->9)
+    push dx     ; push the ascii char onthe stack
+    inc cx      ; increment digit coumnter
+    test ax, ax ; check if quotient is 0
+    jnz .divide_loop  ; if not zero, repeat.
 
-print_string:
-  mov ah, 0x0e
-  .loop:
-    lodsb
-    cmp al, 0
-    je .done
+  .print_loop:
+    pop ax  ; pop the next digit character into al
+    mov ah, 0x0e
     int 0x10
-    jmp .loop
-  .done:
-    ret 
+    loop .print_loop
 
-read_string:
-  .loop:
-    mov ah, 0x0         ; BIOS keystroke function
-    int 0x16
+  pop dx
+  pop cx
+  pop bx
+  pop ax
+  ret
 
-    cmp al, 0x0d
-    je .done
-
-    stosb               ; Store bytes in AL to [DI] and increment DI
-
-    mov ah, 0x0e        ; Echo characters to screen using teletype realtime
-    int 0x10
-
-    jmp .loop
-  .done:
-    mov byte [di], 0
-    ret
-
-prompt:   db "Enter your name: ", 0
-greeting: db "Hello ", 0
-newline:  db 0x0d, 0x0a, 0
-name_buffer: times 32 db 0
-
+; Boot signature
 times 510-($-$$) db 0
 dw 0xaa55
