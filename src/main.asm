@@ -1,46 +1,69 @@
-[org 0x7c00]
+org 0x7c00
+; This is not an runtime instruction.
+; It is an assembler directive.
+; BIOS chip loads the first 512 bytes from the first section of the disk,
+; doesn't matter you want or not. 
+; Here, we are just informing this behaviour of BIOS to assembler.
+; Now, assembler calculates memory addresses with this extra offset.
 
+bits 16
+; All x86 cpu boots at real mode (16-bit)
+; But assembly could be used to create 64-bit apps also.
+; Directing assembler to assemble into 16-bit machine code.
+
+
+
+; --- My Own OS ---
+
+LF equ 0x0a
+CR equ 0x0d
 
 start:
-  mov ax, 1023d
-  call print_dec
+  ; Waiting for keystroke
+  mov ah, 0x00
+  int 0x16
 
-  .hang:
-    cli
-    hlt
-    jmp .hang
+  cmp al, CR
+  je move_to_next_line
 
-; input: ax = 16-bit unsigned number to print
-print_dec:
-  push ax
-  push bx
-  push cx
-  push dx
+  ; Echoing the pressed letter
+  mov ah, 0x0e
+  int 0x10
 
-  mov bx, 10  ; Base 10 divisor
-  xor cx, cx  ; cx is 0, will count the number of digits
+  jmp start
 
-  .divide_loop:
-    xor dx, dx  ; Clear dx before dividing dx:ax
-    div bx      ; ax = quotient, dx = remainder
-    add dl, '0' ; convert remainder to ascii char ('0' + 0->9)
-    push dx     ; push the ascii char onthe stack
-    inc cx      ; increment digit coumnter
-    test ax, ax ; check if quotient is 0
-    jnz .divide_loop  ; if not zero, repeat.
-
-  .print_loop:
-    pop ax  ; pop the next digit character into al
+  move_to_next_line:
     mov ah, 0x0e
+    mov al, LF
     int 0x10
-    loop .print_loop
+    mov al, CR
+    int 0x10
+    jmp start
 
-  pop dx
-  pop cx
-  pop bx
-  pop ax
-  ret
 
-; Boot signature
-times 510-($-$$) db 0
+stop:
+  cli
+  hlt
+  jmp stop
+
+
+times 510 - ($ - $$) db 0
+; Padding the bytes before 511 so that 511'th byte can be there
+; But why not just (510 - $) ? [ $ represents the current memory address ]
+; Remember the orx 0x7c00?
+; If it looks like that $ is 0x100'th byte of memory, it is indeed, in the disk.
+; But before that, our assembler will convert into machine code to store in the disk.
+; And the assembler now knows that everything is offseted by 0x7c00,
+; So, $ is now 0x7c00 + 0x100 = 0x7d00
+; That will make 510 - 0x7d00 !!!!!
+; The saivour is : $$ [starting memory address of the section: 0x7c00]
+; So, it is: 510 - (0x7d00 - 0x7c00)
+;           = 510 - 0x100
+;           = 510 - 256
+;           = 254
+; 
 dw 0xaa55
+; Boot signature
+
+; The last two lines of code are assembler directives.
+; They pads 254 bytes in the .bin file in memory to reach the 511'th byte.
