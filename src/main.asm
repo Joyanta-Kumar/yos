@@ -61,6 +61,8 @@ read_string:
     mov ah, 0x00
     int 0x16
 
+    cmp al, BACKSPACE
+    je .erase_char
     cmp al, CR
     je .done
     cmp cx, username_length
@@ -78,12 +80,24 @@ read_string:
 
   .done:
     ret
+  .erase_char:
+    mov [di], 0
+    dec di
+    mov ah, 0x0e
+    mov al, BACKSPACE
+    int 0x10
+    mov al, ' '
+    int 0x10
+    mov al, BACKSPACE
+    int 0x10
+    jmp .read_loop
 
 
 
 
 LF equ 0x0a
 CR equ 0x0d
+BACKSPACE equ 0x08
 prompt: db LF, CR, "Hi. What is your name?", LF, CR, "> ", 0
 greeting: db "Welcome to your computer, ", 0
 username_length equ 16
