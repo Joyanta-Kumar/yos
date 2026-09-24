@@ -16,6 +16,9 @@ bits 16
 ; --- My Own OS ---
 
 start:
+  mov si, prompt
+  call print_string
+
   mov di, username
   call read_string
 
@@ -80,6 +83,7 @@ read_string:
 
   .done:
     ret
+
   .erase_char:
     mov [di], 0
     dec di
